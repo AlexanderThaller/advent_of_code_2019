@@ -40,6 +40,8 @@ mod tests {
             super::calculate_compensated_fuel_requirement(100_756),
             50346
         );
+
+        assert_eq!(super::calculate_compensated_fuel_requirement(0), 0);
     }
 
     #[bench]

@@ -149,6 +149,8 @@ mod tests {
         assert_eq!(super::calculate_fuel_requirement(14), 2);
         assert_eq!(super::calculate_fuel_requirement(1969), 654);
         assert_eq!(super::calculate_fuel_requirement(100_756), 33583);
+
+        assert_eq!(super::calculate_fuel_requirement(0), 0);
     }
 
     #[bench]
