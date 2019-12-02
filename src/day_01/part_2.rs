@@ -40,7 +40,7 @@ pub fn calculate_compensated_fuel_requirement(mass: Mass) -> Fuel {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn calculate_fuel_requirement() {
+    fn calculate_compensated_fuel_requirement() {
         assert_eq!(super::calculate_compensated_fuel_requirement(12), 2);
         assert_eq!(super::calculate_compensated_fuel_requirement(14), 2);
         assert_eq!(super::calculate_compensated_fuel_requirement(1969), 966);
