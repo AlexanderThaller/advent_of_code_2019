@@ -21,12 +21,7 @@ pub(super) fn calculate_ship_fuel_requirement() -> Fuel {
 }
 
 pub(super) fn calculate_fuel_requirement(mass: Mass) -> Fuel {
-    let div = mass / 3;
-    if div < 2 {
-        0
-    } else {
-        div - 2
-    }
+    (mass / 3).saturating_sub(2)
 }
 
 #[cfg(test)]
