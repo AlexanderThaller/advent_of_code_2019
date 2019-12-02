@@ -28,6 +28,9 @@ pub fn calculate_compensated_fuel_requirement(mass: Mass) -> Fuel {
 
 #[cfg(test)]
 mod tests {
+    extern crate test;
+    use test::Bencher;
+
     #[test]
     fn calculate_compensated_fuel_requirement() {
         assert_eq!(super::calculate_compensated_fuel_requirement(12), 2);
@@ -37,5 +40,20 @@ mod tests {
             super::calculate_compensated_fuel_requirement(100_756),
             50346
         );
+    }
+
+    #[bench]
+    fn bench_calculate_compensated_fuel_requirement_small(b: &mut Bencher) {
+        b.iter(|| super::calculate_compensated_fuel_requirement(12));
+    }
+
+    #[bench]
+    fn bench_calculate_compensated_fuel_requirement_big(b: &mut Bencher) {
+        b.iter(|| super::calculate_compensated_fuel_requirement(999_999));
+    }
+
+    #[bench]
+    fn bench_calculate_compensated_fuel_requirement_huge(b: &mut Bencher) {
+        b.iter(|| super::calculate_compensated_fuel_requirement(999_999_999));
     }
 }

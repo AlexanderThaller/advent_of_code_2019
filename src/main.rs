@@ -1,3 +1,4 @@
+#![feature(test)]
 #![deny(missing_docs)]
 //! Solutions for Advent of Code 2019
 

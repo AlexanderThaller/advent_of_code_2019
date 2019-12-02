@@ -139,11 +139,29 @@ pub fn calculate_fuel_requirement(mass: Mass) -> Fuel {
 
 #[cfg(test)]
 mod tests {
+    extern crate test;
+    use test::Bencher;
+
     #[test]
     fn calculate_fuel_requirement() {
         assert_eq!(super::calculate_fuel_requirement(12), 2);
         assert_eq!(super::calculate_fuel_requirement(14), 2);
         assert_eq!(super::calculate_fuel_requirement(1969), 654);
         assert_eq!(super::calculate_fuel_requirement(100_756), 33583);
+    }
+
+    #[bench]
+    fn bench_calculate_fuel_requirement_small(b: &mut Bencher) {
+        b.iter(|| super::calculate_fuel_requirement(12));
+    }
+
+    #[bench]
+    fn bench_calculate_fuel_requirement_big(b: &mut Bencher) {
+        b.iter(|| super::calculate_fuel_requirement(999_999));
+    }
+
+    #[bench]
+    fn bench_calculate_fuel_requirement_huge(b: &mut Bencher) {
+        b.iter(|| super::calculate_fuel_requirement(999_999_999));
     }
 }
