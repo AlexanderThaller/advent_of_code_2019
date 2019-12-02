@@ -1,6 +1,6 @@
-//! Solutions for Advent of Code 2019 Day 01 Part 1
+//! Solutions for Advent of Code 2019 Day 01 Part 2
 
-use crate::day_00::{
+use crate::day_01::part_1::{
     calculate_fuel_requirement,
     Fuel,
     Mass,
