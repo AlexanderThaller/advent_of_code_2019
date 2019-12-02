@@ -7,11 +7,6 @@ matrix:
 
   include:
   - rust: 'nightly'
-  - rust: 'beta'
-  - rust: 'stable'
-
-  allow_failures:
-  - rust: 'nightly'
 
 script:
   - 'cargo check'
