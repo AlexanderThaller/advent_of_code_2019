@@ -140,6 +140,7 @@ pub fn calculate_fuel_requirement(mass: Mass) -> Fuel {
 #[cfg(test)]
 mod tests {
     extern crate test;
+
     use test::Bencher;
 
     #[test]
@@ -151,17 +152,32 @@ mod tests {
     }
 
     #[bench]
+    fn bench_calculate_fuel_requirement_zero(b: &mut Bencher) {
+        let n = test::black_box(0);
+        b.iter(|| super::calculate_fuel_requirement(n));
+    }
+
+    #[bench]
     fn bench_calculate_fuel_requirement_small(b: &mut Bencher) {
-        b.iter(|| super::calculate_fuel_requirement(12));
+        let n = test::black_box(12);
+        b.iter(|| super::calculate_fuel_requirement(n));
     }
 
     #[bench]
     fn bench_calculate_fuel_requirement_big(b: &mut Bencher) {
-        b.iter(|| super::calculate_fuel_requirement(999_999));
+        let n = test::black_box(999_999);
+        b.iter(|| super::calculate_fuel_requirement(n));
     }
 
     #[bench]
     fn bench_calculate_fuel_requirement_huge(b: &mut Bencher) {
-        b.iter(|| super::calculate_fuel_requirement(999_999_999));
+        let n = test::black_box(999_999_999);
+        b.iter(|| super::calculate_fuel_requirement(n));
+    }
+
+    #[bench]
+    fn bench_calculate_fuel_requirement_max(b: &mut Bencher) {
+        let n = test::black_box(std::usize::MAX);
+        b.iter(|| super::calculate_fuel_requirement(n));
     }
 }
