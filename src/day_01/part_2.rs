@@ -21,12 +21,9 @@ pub fn calculate_compensated_ship_fuel_requirement() -> Fuel {
 pub fn calculate_compensated_fuel_requirement(mass: Mass) -> Fuel {
     let base_mass = calculate_fuel_requirement(mass);
 
-    std::iter::successors(Some(base_mass), |&x| {
-        dbg!(x);
-        Some(calculate_fuel_requirement(x))
-    })
-    .take_while(|&x| x != 0)
-    .sum()
+    std::iter::successors(Some(base_mass), |&x| Some(calculate_fuel_requirement(x)))
+        .take_while(|&x| x != 0)
+        .sum()
 }
 
 #[cfg(test)]
