@@ -6,7 +6,6 @@ use crate::day_01::part_1::{
     Mass,
     SHIP_MODULES_MASSES,
 };
-use log::debug;
 
 /// Calculate required fuel for the mass of the ship and the additional fuel
 /// required to also lift the initial ship mass fuel.
@@ -20,21 +19,11 @@ pub fn calculate_compensated_ship_fuel_requirement() -> Fuel {
 /// Calculate required fuel for mass while also compensating for the fuel
 /// required to lift the added fuel.
 pub fn calculate_compensated_fuel_requirement(mass: Mass) -> Fuel {
-    let mass_fuel = calculate_fuel_requirement(mass);
-    debug!("mass fuel is {}", mass_fuel);
-
-    let fuel_fuel = match calculate_fuel_requirement(mass_fuel) {
-        0 => 0,
-        additional => {
-            debug!(
-                "calculating additional fuel required additional is {}",
-                additional
-            );
-            additional + calculate_compensated_fuel_requirement(additional)
-        }
-    };
-
-    mass_fuel + fuel_fuel
+    std::iter::successors(Some(calculate_fuel_requirement(mass)), |&x| {
+        Some(calculate_fuel_requirement(x))
+    })
+    .take_while(|&x| x != 0)
+    .sum()
 }
 
 #[cfg(test)]
