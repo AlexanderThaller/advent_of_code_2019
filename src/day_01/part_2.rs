@@ -19,7 +19,10 @@ pub fn calculate_compensated_ship_fuel_requirement() -> Fuel {
 /// Calculate required fuel for mass while also compensating for the fuel
 /// required to lift the fuel.
 pub fn calculate_compensated_fuel_requirement(mass: Mass) -> Fuel {
-    std::iter::successors(Some(calculate_fuel_requirement(mass)), |&x| {
+    let base_mass = calculate_fuel_requirement(mass);
+
+    std::iter::successors(Some(base_mass), |&x| {
+        dbg!(x);
         Some(calculate_fuel_requirement(x))
     })
     .take_while(|&x| x != 0)
