@@ -1,8 +1,8 @@
 //! Solutions for Advent of Code 2019 Day 02 Part 2
 
-use crate::day_02::part_1::{
-    parse_intcodes,
-    INPUT,
+use crate::day_02::{
+    computer::Computer,
+    part_1::INPUT,
 };
 
 pub fn what() -> Option<usize> {
@@ -14,10 +14,10 @@ pub fn what() -> Option<usize> {
             input[1] = noun;
             input[2] = verb;
 
-            let program = parse_intcodes(&input).unwrap();
-            let restored = program.run();
+            let computer = Computer::from(input);
+            let values = computer.run().unwrap();
 
-            if restored.values[0] == LOOKING_FOR {
+            if values[0] == LOOKING_FOR {
                 return Some(100 * noun + verb);
             }
         }
