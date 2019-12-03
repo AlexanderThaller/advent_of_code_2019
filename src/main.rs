@@ -14,5 +14,5 @@ fn main() {
     dbg!(day_01::part_2::calculate_compensated_ship_fuel_requirement());
 
     dbg!(day_02::part_1::restore_gravity_assist_program());
-    dbg!(day_02::part_2::what());
+    dbg!(day_02::part_2::what().unwrap());
 }

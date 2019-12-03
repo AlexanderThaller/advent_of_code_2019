@@ -14,10 +14,10 @@ pub enum ComputerError {
 }
 
 impl Computer {
-    pub fn run(self) -> Result<Vec<usize>, ComputerError> {
+    pub fn run(&self) -> Result<Vec<usize>, ComputerError> {
         use ComputerError::*;
 
-        let mut memory = self.memory;
+        let mut memory = self.memory.clone();
 
         let mut index = 0;
         loop {
@@ -44,7 +44,7 @@ impl Computer {
                     memory[result_address] = result_value;
                 }
                 Intcode::Halt => break,
-                Intcode::Unkown => index += 1,
+                Intcode::Skip => index += 1,
             }
         }
 
@@ -56,7 +56,7 @@ enum Intcode {
     Add,
     Mul,
     Halt,
-    Unkown,
+    Skip,
 }
 
 impl From<&usize> for Intcode {
@@ -66,15 +66,18 @@ impl From<&usize> for Intcode {
             1 => Add,
             2 => Mul,
             99 => Halt,
-            _ => Unkown,
+            _ => Skip,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    extern crate test;
+
     use super::Computer;
     use pretty_assertions::assert_eq;
+    use test::Bencher;
 
     #[test]
     fn computer_run_example_text() {
@@ -119,5 +122,53 @@ mod tests {
         let got = Computer::from(input).run().unwrap();
 
         assert_eq!(expected, got);
+    }
+
+    #[bench]
+    fn bench_computer_run_example_text(b: &mut Bencher) {
+        let input = vec![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50];
+
+        let computer = Computer::from(input);
+        b.iter(|| computer.run());
+    }
+
+    #[bench]
+    fn bench_computer_run_example01(b: &mut Bencher) {
+        let input = vec![1, 0, 0, 0, 99];
+
+        let computer = Computer::from(input);
+        b.iter(|| computer.run());
+    }
+
+    #[bench]
+    fn bench_computer_run_example02(b: &mut Bencher) {
+        let input = vec![2, 3, 0, 3, 99];
+
+        let computer = Computer::from(input);
+        b.iter(|| computer.run());
+    }
+
+    #[bench]
+    fn bench_computer_run_example03(b: &mut Bencher) {
+        let input = vec![2, 4, 4, 5, 99, 0];
+
+        let computer = Computer::from(input);
+        b.iter(|| computer.run());
+    }
+
+    #[bench]
+    fn bench_computer_run_example04(b: &mut Bencher) {
+        let input = vec![1, 1, 1, 4, 99, 5, 6, 0, 99];
+
+        let computer = Computer::from(input);
+        b.iter(|| computer.run());
+    }
+
+    #[bench]
+    fn bench_computer_run_restore_gravity_assist_program(b: &mut Bencher) {
+        let input = crate::day_02::part_1::INPUT.to_vec();
+
+        let computer = Computer::from(input);
+        b.iter(|| computer.run());
     }
 }
