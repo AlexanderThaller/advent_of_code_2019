@@ -20,4 +20,7 @@ fn main() {
 
     dbg!(day_03::closest_intersection());
     // dbg!(day_03::closest_intersection_draw());
+
+    dbg!(day_04::part_1::count_passwords());
+    dbg!(day_04::part_2::count_passwords());
 }
