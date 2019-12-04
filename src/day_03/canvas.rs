@@ -4,13 +4,13 @@ use crate::day_03::{
 };
 use ggez::{
     self,
-    event,
     event::{
+        self,
         KeyCode,
         KeyMods,
     },
-    graphics,
     graphics::{
+        self,
         Color,
         DrawMode,
         Mesh,
@@ -226,12 +226,12 @@ impl event::EventHandler for Canvas {
         match keycode {
             KeyCode::Up => {
                 self.view_y -= VIEW_STEP_FACTOR;
-                println!("View y is now {}", self.view_x);
+                println!("View y is now {}", self.view_y);
             }
 
             KeyCode::Down => {
                 self.view_y += VIEW_STEP_FACTOR;
-                println!("View y is now {}", self.view_x);
+                println!("View y is now {}", self.view_y);
             }
 
             KeyCode::Left => {
