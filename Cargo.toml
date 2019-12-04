@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 env_logger = "0.7"
 log = "0.4"
+ggez = "0.5.1"
 
 [dev-dependencies]
 pretty_assertions = "0.6"
