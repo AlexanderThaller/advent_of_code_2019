@@ -62,10 +62,6 @@ pub fn password_is_monotonic(chars: &[char]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    extern crate test;
-
-    use test::Bencher;
-
     #[test]
     fn is_password_valid1() {
         assert!(super::is_password("111111"));
@@ -95,23 +91,37 @@ mod tests {
     fn is_password_invalid_no_double() {
         assert!(!super::is_password("123789"));
     }
+}
+
+#[cfg(test)]
+mod benchs {
+    extern crate test;
+
+    use test::Bencher;
 
     #[bench]
-    fn bench_count_passwords_single(b: &mut Bencher) {
+    fn is_password(b: &mut Bencher) {
+        let input = test::black_box("12345");
+
+        b.iter(|| super::is_password(input))
+    }
+
+    #[bench]
+    fn count_passwords_single(b: &mut Bencher) {
         let input = test::black_box("0-1");
 
         b.iter(|| super::_count_passwords(input))
     }
 
     #[bench]
-    fn bench_count_passwords_lots(b: &mut Bencher) {
+    fn count_passwords_lots(b: &mut Bencher) {
         let input = test::black_box("0-10000");
 
         b.iter(|| super::_count_passwords(input))
     }
 
     #[bench]
-    fn bench_count_passwords_input(b: &mut Bencher) {
+    fn count_passwords_input(b: &mut Bencher) {
         let input = test::black_box(crate::day_04::INPUT);
 
         b.iter(|| super::_count_passwords(input))
