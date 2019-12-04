@@ -119,6 +119,12 @@ pub fn closest_intersection_draw() -> (Distance, Steps) {
 
     canvas.add_closest_intersection(&intersection, canvas::MAGENTA);
 
+    let steps_to_closest_first = first.steps_to(&intersection);
+    let steps_to_closest_second = second.steps_to(&intersection);
+
+    canvas.add_positions(&steps_to_closest_first, canvas::MAGENTA);
+    canvas.add_positions(&steps_to_closest_second, canvas::MAGENTA);
+
     canvas.run();
 
     (distance, steps)
