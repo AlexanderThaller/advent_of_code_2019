@@ -29,6 +29,13 @@ const DRAW_START_POINT_X: f32 = FIELD_SIZE_X / 2.0;
 const DRAW_START_POINT_Y: f32 = FIELD_SIZE_Y - 100.0;
 const VIEW_STEP_FACTOR: f32 = 10.0;
 
+pub const MAGENTA: Color = Color {
+    r: 255.0,
+    g: 0.0,
+    b: 255.0,
+    a: 1.0,
+};
+
 pub const BLUE: Color = Color {
     r: 0.0,
     g: 188.0,

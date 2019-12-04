@@ -64,7 +64,7 @@ pub fn closest_intersection() -> (Distance, Steps) {
     let closest = intersections.closest(start_point).unwrap().1;
     let distance = closest.distance(start_point);
 
-    let (steps, intersection) = intersections
+    let (steps, _) = intersections
         .0
         .iter()
         .map(|intersection| {
@@ -104,20 +104,24 @@ pub fn closest_intersection_draw() -> (Distance, Steps) {
 
     let distance = closest.distance(start_point);
 
-    let first_steps_to_closest = first.steps_to(&closest);
-    let second_steps_to_closest = second.steps_to(&closest);
+    let (steps, intersection) = intersections
+        .0
+        .iter()
+        .map(|intersection| {
+            (
+                // + 2 for both missing the final step
+                first.steps_to(intersection).len() + second.steps_to(intersection).len() + 2,
+                intersection,
+            )
+        })
+        .min()
+        .unwrap();
 
-    let steps = if first_steps_to_closest.len() < second_steps_to_closest.len() {
-        first_steps_to_closest
-    } else {
-        second_steps_to_closest
-    };
-
-    canvas.add_positions(&steps, canvas::RED);
+    canvas.add_closest_intersection(&intersection, canvas::MAGENTA);
 
     canvas.run();
 
-    (distance, steps.len() + 1)
+    (distance, steps)
 }
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -267,10 +271,10 @@ impl Positions {
         )
     }
 
-    fn closest(self, other: Position) -> Option<(Distance, Position)> {
+    fn closest(&self, other: Position) -> Option<(Distance, &Position)> {
         let distances: Vec<_> = self
             .0
-            .into_iter()
+            .iter()
             .map(|position| (position.distance(other), position))
             .collect();
 
