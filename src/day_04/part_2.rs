@@ -7,7 +7,11 @@ use crate::day_04::part_1::{
 };
 
 pub fn count_passwords() -> usize {
-    let mut split = super::INPUT.split('-');
+    _count_passwords(super::INPUT)
+}
+
+pub fn _count_passwords(input: &str) -> usize {
+    let mut split = input.split('-');
     let first: usize = split.next().unwrap().parse().unwrap();
     let second: usize = split.next().unwrap().parse().unwrap();
 
@@ -21,20 +25,19 @@ pub fn count_passwords() -> usize {
 pub fn is_password(password: &str) -> bool {
     let chars: Vec<_> = password.chars().collect();
 
-    let has_right_length = password_has_right_length(&chars);
-    let has_double = password_has_double(&chars);
-    let has_no_larger_group = password_has_no_larger_group(&chars);
-    let is_monotonic = password_is_monotonic(&chars);
+    if !password_has_right_length(&chars) {
+        return false;
+    }
 
-    let larger_group_ok = if has_double {
-        has_double
-    } else {
-        has_no_larger_group
-    };
+    if !password_has_double(&chars) {
+        return false;
+    }
 
-    [has_right_length, has_double, larger_group_ok, is_monotonic]
-        .iter()
-        .all(|r| *r)
+    if !password_is_monotonic(&chars) {
+        return false;
+    }
+
+    return true;
 }
 
 fn password_has_double(chars: &[char]) -> bool {
@@ -46,21 +49,12 @@ fn password_has_double(chars: &[char]) -> bool {
     count.iter().filter(|(_, count)| **count == 2).count() >= 1
 }
 
-fn password_has_no_larger_group(chars: &[char]) -> bool {
-    let mut count = BTreeMap::default();
-    for c in chars {
-        *count.entry(c).or_insert(0) += 1;
-    }
-
-    count
-        .iter()
-        .max_by(|(_, x), (_, y)| x.cmp(y))
-        .map(|(_, count)| *count <= 2)
-        .unwrap_or_default()
-}
-
 #[cfg(test)]
 mod tests {
+    extern crate test;
+
+    use test::Bencher;
+
     #[test]
     fn is_password_valid1() {
         assert!(super::is_password("112233"));
@@ -76,17 +70,31 @@ mod tests {
         assert!(!super::is_password("123444"));
     }
 
-    #[test]
-    fn password_has_no_larger_group_valid() {
-        assert!(super::password_has_no_larger_group(&[
-            '1', '1', '2', '2', '3', '3'
-        ]));
+    #[bench]
+    fn bench_is_password(b: &mut Bencher) {
+        let input = test::black_box("12345");
+
+        b.iter(|| super::is_password(input))
     }
 
-    #[test]
-    fn password_has_no_larger_group_invalid() {
-        assert!(!super::password_has_no_larger_group(&[
-            '1', '2', '3', '4', '4', '4'
-        ]));
+    #[bench]
+    fn bench_count_passwords_single(b: &mut Bencher) {
+        let input = test::black_box("0-1");
+
+        b.iter(|| super::_count_passwords(input))
+    }
+
+    #[bench]
+    fn bench_count_passwords_lots(b: &mut Bencher) {
+        let input = test::black_box("0-10000");
+
+        b.iter(|| super::_count_passwords(input))
+    }
+
+    #[bench]
+    fn bench_count_passwords_input(b: &mut Bencher) {
+        let input = test::black_box(crate::day_04::INPUT);
+
+        b.iter(|| super::_count_passwords(input))
     }
 }

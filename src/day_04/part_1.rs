@@ -20,13 +20,19 @@ fn _count_passwords(input: &str) -> usize {
 pub fn is_password(password: &str) -> bool {
     let chars: Vec<_> = password.chars().collect();
 
-    let has_right_length = password_has_right_length(&chars);
-    let has_double = password_has_double(&chars);
-    let is_monotonic = password_is_monotonic(&chars);
+    if !password_has_right_length(&chars) {
+        return false;
+    }
 
-    [has_right_length, has_double, is_monotonic]
-        .iter()
-        .all(|r| *r)
+    if !password_has_double(&chars) {
+        return false;
+    }
+
+    if !password_is_monotonic(&chars) {
+        return false;
+    }
+
+    return true;
 }
 
 pub fn password_has_right_length(chars: &[char]) -> bool {
@@ -100,6 +106,13 @@ mod tests {
     #[bench]
     fn bench_count_passwords_lots(b: &mut Bencher) {
         let input = test::black_box("0-10000");
+
+        b.iter(|| super::_count_passwords(input))
+    }
+
+    #[bench]
+    fn bench_count_passwords_input(b: &mut Bencher) {
+        let input = test::black_box(crate::day_04::INPUT);
 
         b.iter(|| super::_count_passwords(input))
     }
