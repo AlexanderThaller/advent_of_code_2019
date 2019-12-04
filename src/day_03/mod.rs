@@ -64,16 +64,20 @@ pub fn closest_intersection() -> (Distance, Steps) {
     let closest = intersections.closest(start_point).unwrap().1;
     let distance = closest.distance(start_point);
 
-    let first_steps_to_closest = first.steps_to(&closest);
-    let second_steps_to_closest = second.steps_to(&closest);
+    let (steps, intersection) = intersections
+        .0
+        .iter()
+        .map(|intersection| {
+            (
+                // + 2 for both missing the final step
+                first.steps_to(intersection).len() + second.steps_to(intersection).len() + 2,
+                intersection,
+            )
+        })
+        .min()
+        .unwrap();
 
-    let steps = if first_steps_to_closest.len() < second_steps_to_closest.len() {
-        first_steps_to_closest
-    } else {
-        second_steps_to_closest
-    };
-
-    (distance, steps.len() + 1)
+    (distance, steps)
 }
 
 #[allow(dead_code)]

@@ -16,6 +16,6 @@ fn main() {
     //
     // dbg!(day_02::part_1::restore_gravity_assist_program());
     // dbg!(day_02::part_2::what().unwrap());
-    // dbg!(day_03::closest_intersection());
-    dbg!(day_03::closest_intersection_draw());
+    dbg!(day_03::closest_intersection());
+    // dbg!(day_03::closest_intersection_draw());
 }
