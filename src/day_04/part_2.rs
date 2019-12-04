@@ -2,6 +2,7 @@ use rayon::prelude::*;
 use std::collections::BTreeMap;
 
 use crate::day_04::part_1::{
+    digits_reverse,
     password_has_right_length,
     password_is_monotonic,
 };
@@ -17,33 +18,32 @@ pub fn _count_passwords(input: &str) -> usize {
 
     (first..=second)
         .into_par_iter()
-        .map(|password| password.to_string())
-        .filter(|password| is_password(password))
+        .filter(|password| is_password(*password))
         .count()
 }
 
-pub fn is_password(password: &str) -> bool {
-    let chars: Vec<_> = password.chars().collect();
+pub fn is_password(password: usize) -> bool {
+    let digits = digits_reverse(password).collect::<Vec<_>>();
 
-    if !password_has_right_length(&chars) {
+    if !password_has_right_length(&digits) {
         return false;
     }
 
-    if !password_has_double(&chars) {
+    if !password_has_double(&digits) {
         return false;
     }
 
-    if !password_is_monotonic(&chars) {
+    if !password_is_monotonic(&digits) {
         return false;
     }
 
-    return true;
+    true
 }
 
-fn password_has_double(chars: &[char]) -> bool {
+fn password_has_double(digits: &[u8]) -> bool {
     let mut count = BTreeMap::default();
-    for c in chars {
-        *count.entry(c).or_insert(0) += 1;
+    for d in digits {
+        *count.entry(d).or_insert(0) += 1;
     }
 
     count.iter().filter(|(_, count)| **count == 2).count() >= 1
@@ -53,17 +53,17 @@ fn password_has_double(chars: &[char]) -> bool {
 mod tests {
     #[test]
     fn is_password_valid1() {
-        assert!(super::is_password("112233"));
+        assert!(super::is_password(112233));
     }
 
     #[test]
     fn is_password_valid2() {
-        assert!(super::is_password("111122"));
+        assert!(super::is_password(111122));
     }
 
     #[test]
     fn is_password_invalid1() {
-        assert!(!super::is_password("123444"));
+        assert!(!super::is_password(123444));
     }
 }
 
@@ -75,7 +75,7 @@ mod benchs {
 
     #[bench]
     fn is_password(b: &mut Bencher) {
-        let input = test::black_box("12345");
+        let input = test::black_box(12345);
 
         b.iter(|| super::is_password(input))
     }
