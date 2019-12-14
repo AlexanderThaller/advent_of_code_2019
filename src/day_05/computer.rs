@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 pub struct Computer {
     pub memory: Vec<isize>,
     pub input: Reader,
@@ -59,7 +61,6 @@ impl Writer {
 impl Computer {
     pub fn run(&mut self) -> Result<Vec<isize>, ComputerError> {
         use ComputerError::*;
-        use ParameterMode::*;
 
         let mut memory = self.memory.clone();
 
@@ -71,53 +72,109 @@ impl Computer {
             match intcode {
                 Intcode::Add(ref first_value_mode, ref second_value_mode)
                 | Intcode::Mul(ref first_value_mode, ref second_value_mode) => {
-                    let first_value_address = match first_value_mode {
-                        PositionMode => memory[index + 1] as usize,
-                        ImmediateMode => index + 1,
-                    };
-
-                    let first_value = memory
-                        .get(first_value_address)
-                        .ok_or(IndexNotFound(index))?;
-
-                    let second_value_address = match second_value_mode {
-                        PositionMode => memory[index + 2] as usize,
-                        ImmediateMode => index + 2,
-                    };
-
-                    let second_value = memory
-                        .get(second_value_address)
-                        .ok_or(IndexNotFound(index))?;
+                    let first_value = read_value(&memory, index + 1, first_value_mode)?;
+                    let second_value = read_value(&memory, index + 2, second_value_mode)?;
+                    let result_address = memory[index + 3] as usize;
 
                     let result_value = match intcode {
-                        Intcode::Add(..) => first_value + second_value,
-                        Intcode::Mul(..) => first_value * second_value,
+                        Intcode::Add(..) => {
+                            println!("ADD\t{}\t{}\t{}", first_value, second_value, result_address);
+
+                            first_value + second_value
+                        }
+                        Intcode::Mul(..) => {
+                            println!("MUL\t{}\t{}\t{}", first_value, second_value, result_address);
+
+                            first_value * second_value
+                        }
                         _ => unreachable!(),
                     };
 
-                    let result_address = memory[index + 3] as usize;
                     memory[result_address] = result_value;
 
                     index += 4;
                 }
-                Intcode::Read | Intcode::Write => {
-                    let address = memory[index + 1] as usize;
 
-                    match intcode {
-                        Intcode::Read => {
-                            let value = self.input.read();
-                            memory[address] = value;
-                        }
-                        Intcode::Write => {
-                            let value = memory[address];
-                            self.output.write(value);
-                        }
-                        _ => unreachable!(),
+                Intcode::JumpIfTrue(ref first_value_mode, ref second_value_mode) => {
+                    let first_value = read_value(&memory, index + 1, first_value_mode)?;
+                    let second_value = read_value(&memory, index + 2, second_value_mode)?;
+
+                    if first_value != 0 {
+                        index = second_value.try_into().unwrap();
+                        println!("JMPT\t{}", index);
+                    } else {
+                        index += 3
                     }
+                }
 
+                Intcode::JumpIfFalse(ref first_value_mode, ref second_value_mode) => {
+                    let first_value = read_value(&memory, index + 1, first_value_mode)?;
+                    let second_value = read_value(&memory, index + 2, second_value_mode)?;
+
+                    if first_value == 0 {
+                        index = second_value.try_into().unwrap();
+                        println!("JMPF\t{}", index);
+                    } else {
+                        index += 3
+                    }
+                }
+
+                Intcode::LessThan(ref first_value_mode, ref second_value_mode) => {
+                    let first_value = read_value(&memory, index + 1, first_value_mode)?;
+                    let second_value = read_value(&memory, index + 2, second_value_mode)?;
+
+                    let result_value = if first_value < second_value { 1 } else { 0 };
+
+                    let result_address = memory[index + 3] as usize;
+                    memory[result_address] = result_value;
+
+                    println!(
+                        "LESS\t{}\t{}\t{}",
+                        first_value, second_value, result_address
+                    );
+
+                    index += 4;
+                }
+
+                Intcode::Equals(ref first_value_mode, ref second_value_mode) => {
+                    let first_value = read_value(&memory, index + 1, first_value_mode)?;
+                    let second_value = read_value(&memory, index + 2, second_value_mode)?;
+
+                    let result_value = if first_value == second_value { 1 } else { 0 };
+
+                    let result_address = memory[index + 3] as usize;
+                    memory[result_address] = result_value;
+
+                    println!(
+                        "EQUAL\t{}\t{}\t{}",
+                        first_value, second_value, result_address
+                    );
+
+                    index += 4;
+                }
+
+                Intcode::Read => {
+                    let address = memory[index + 1] as usize;
+                    let value = self.input.read();
+                    println!("READ\t{}\t{}", value, address);
+
+                    memory[address] = value;
                     index += 2;
                 }
-                Intcode::Halt => break,
+
+                Intcode::Write(ref value_mode) => {
+                    let value = read_value(&memory, index + 1, value_mode)?;
+
+                    println!("WRITE\t{}", value);
+
+                    self.output.write(value);
+                    index += 2;
+                }
+
+                Intcode::Halt => {
+                    println!("HALT");
+                    break;
+                }
                 Intcode::Skip => index += 1,
             }
         }
@@ -126,12 +183,33 @@ impl Computer {
     }
 }
 
+fn read_value(
+    memory: &[isize],
+    index: usize,
+    mode: &ParameterMode,
+) -> Result<isize, ComputerError> {
+    let address = match mode {
+        ParameterMode::PositionMode => memory[index] as usize,
+        ParameterMode::ImmediateMode => index,
+    };
+
+    let value = memory
+        .get(address)
+        .ok_or(ComputerError::IndexNotFound(index))?;
+
+    Ok(*value)
+}
+
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 enum Intcode {
     Add(ParameterMode, ParameterMode),
     Mul(ParameterMode, ParameterMode),
     Read,
-    Write,
+    Write(ParameterMode),
+    JumpIfTrue(ParameterMode, ParameterMode),
+    JumpIfFalse(ParameterMode, ParameterMode),
+    LessThan(ParameterMode, ParameterMode),
+    Equals(ParameterMode, ParameterMode),
 
     Halt,
     Skip,
@@ -164,7 +242,11 @@ impl From<isize> for Intcode {
             1 => Add(first_mode, second_mode),
             2 => Mul(first_mode, second_mode),
             3 => Read,
-            4 => Write,
+            4 => Write(first_mode),
+            5 => JumpIfTrue(first_mode, second_mode),
+            6 => JumpIfFalse(first_mode, second_mode),
+            7 => LessThan(first_mode, second_mode),
+            8 => Equals(first_mode, second_mode),
             99 => Halt,
             _ => Skip,
         }
@@ -290,9 +372,11 @@ mod tests {
         assert_eq!(Add(PositionMode, PositionMode), 1.into());
         assert_eq!(Mul(PositionMode, PositionMode), 2.into());
         assert_eq!(Read, 3.into());
-        assert_eq!(Write, 4.into());
+        assert_eq!(Write(PositionMode), 4.into());
         assert_eq!(Halt, 99.into());
         assert_eq!(Skip, 50.into());
+
+        assert_eq!(Write(ImmediateMode), 104.into());
     }
 
     #[test]
@@ -343,6 +427,303 @@ mod tests {
         let got_memory = computer.run().unwrap();
 
         assert_eq!(expected_memory, got_memory);
+    }
+
+    #[test]
+    fn computer_run_day_05_example04_equal() {
+        let input_memory = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_values = vec![8];
+
+        let expected_output = Writer::Tester { values: vec![1] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example04_not_equal() {
+        let input_memory = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_values = vec![7];
+
+        let expected_output = Writer::Tester { values: vec![0] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example05_less() {
+        let input_memory = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_values = vec![7];
+
+        let expected_output = Writer::Tester { values: vec![1] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example05_equal() {
+        let input_memory = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_values = vec![8];
+
+        let expected_output = Writer::Tester { values: vec![0] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example06_equal() {
+        let input_memory = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+        let input_values = vec![8];
+
+        let expected_output = Writer::Tester { values: vec![1] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example06_not_equal() {
+        let input_memory = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+        let input_values = vec![42];
+
+        let expected_output = Writer::Tester { values: vec![0] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example07_less() {
+        let input_memory = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+        let input_values = vec![-42];
+
+        let expected_output = Writer::Tester { values: vec![1] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example07_equal() {
+        let input_memory = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+        let input_values = vec![8];
+
+        let expected_output = Writer::Tester { values: vec![0] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example08_zero() {
+        let input_memory = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+        let input_values = vec![0];
+
+        let expected_output = Writer::Tester { values: vec![0] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example08_not_zero() {
+        let input_memory = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+        let input_values = vec![42];
+
+        let expected_output = Writer::Tester { values: vec![1] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example09_zero() {
+        let input_memory = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        let input_values = vec![0];
+
+        let expected_output = Writer::Tester { values: vec![0] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example09_not_zero() {
+        let input_memory = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        let input_values = vec![42];
+
+        let expected_output = Writer::Tester { values: vec![1] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example10_below_eight() {
+        let input_memory = vec![
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
+            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
+            20, 1105, 1, 46, 98, 99,
+        ];
+        let input_values = vec![-42];
+
+        let expected_output = Writer::Tester { values: vec![999] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example10_equal_eight() {
+        let input_memory = vec![
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
+            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
+            20, 1105, 1, 46, 98, 99,
+        ];
+        let input_values = vec![8];
+
+        let expected_output = Writer::Tester { values: vec![1000] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
+    }
+
+    #[test]
+    fn computer_run_day_05_example10_above_eight() {
+        let input_memory = vec![
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
+            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
+            20, 1105, 1, 46, 98, 99,
+        ];
+        let input_values = vec![42];
+
+        let expected_output = Writer::Tester { values: vec![1001] };
+
+        let mut computer = Computer {
+            memory: input_memory,
+            input: Reader::Tester(Box::new(input_values.into_iter())),
+            output: Writer::Tester { values: Vec::new() },
+        };
+
+        computer.run().unwrap();
+        let got_output = computer.output;
+
+        assert_eq!(expected_output, got_output);
     }
 
     #[bench]
