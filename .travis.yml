@@ -1,5 +1,5 @@
 before_install:
-  - sudo apt-get -y install build-essential pkg-config libsdl2
+  - sudo apt-get -y install build-essential pkg-config libsdl2-dev
 
 language: 'rust'
 
