@@ -45,6 +45,18 @@ impl Computer {
         }
     }
 
+    pub fn debug_low(self) -> Self {
+        Self {
+            debug_flags: self
+                .debug_flags
+                .print_instructions()
+                .print_jumps()
+                .print_relative_base()
+                .print_output(),
+            ..self
+        }
+    }
+
     pub fn print_instructions(self) -> Self {
         Self {
             debug_flags: self.debug_flags.print_instructions(),
@@ -504,16 +516,16 @@ impl std::fmt::Display for Intcode {
                 write!(f, "MUL\t[{}, {}, {}]", first_mode, second_mode, third_mode)
             }
 
-            Read(mode) => write!(f, "READ\t[{}]", mode),
+            Read(mode) => write!(f, "READ\t[{}]        ", mode),
 
-            Write(mode) => write!(f, "WRITE\t[{}]", mode),
+            Write(mode) => write!(f, "WRITE\t[{}]        ", mode),
 
             JumpIfTrue(first_mode, second_mode) => {
-                write!(f, "JMPT\t[{}, {}]", first_mode, second_mode)
+                write!(f, "JMPT\t[{}, {}]    ", first_mode, second_mode)
             }
 
             JumpIfFalse(first_mode, second_mode) => {
-                write!(f, "JMPF\t[{}, {}]", first_mode, second_mode)
+                write!(f, "JMPF\t[{}, {}]    ", first_mode, second_mode)
             }
 
             LessThan(first_mode, second_mode, third_mode) => {
@@ -526,11 +538,11 @@ impl std::fmt::Display for Intcode {
                 first_mode, second_mode, third_mode
             ),
 
-            AdjustRelativeBase(mode) => write!(f, "ADJREL\t[{}]", mode),
+            AdjustRelativeBase(mode) => write!(f, "ADJREL\t[{}]        ", mode),
 
-            Halt => write!(f, "HALT\t"),
+            Halt => write!(f, "HALT\t          "),
 
-            Skip => write!(f, "SKIP\t"),
+            Skip => write!(f, "SKIP\t          "),
         }
     }
 }
