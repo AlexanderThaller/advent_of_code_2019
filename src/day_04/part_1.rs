@@ -74,17 +74,17 @@ pub fn digits_reverse(mut password: usize) -> impl Iterator<Item = u8> {
 mod tests {
     #[test]
     fn is_password_valid1() {
-        assert!(super::is_password(111111));
+        assert!(super::is_password(111_111));
     }
 
     #[test]
     fn is_password_valid2() {
-        assert!(super::is_password(112345));
+        assert!(super::is_password(112_345));
     }
 
     #[test]
     fn is_password_valid3() {
-        assert!(super::is_password(888889));
+        assert!(super::is_password(888_889));
     }
 
     #[test]
@@ -94,18 +94,18 @@ mod tests {
 
     #[test]
     fn is_password_invalid_not_monotonic() {
-        assert!(!super::is_password(223450));
+        assert!(!super::is_password(223_450));
     }
 
     #[test]
     fn is_password_invalid_no_double() {
-        assert!(!super::is_password(123789));
+        assert!(!super::is_password(123_789));
     }
 
     #[test]
     fn digits() {
         assert_eq!(
-            super::digits_reverse(123456).collect::<Vec<_>>(),
+            super::digits_reverse(123_456).collect::<Vec<_>>(),
             [6, 5, 4, 3, 2, 1]
         );
     }

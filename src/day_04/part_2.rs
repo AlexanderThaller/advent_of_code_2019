@@ -53,17 +53,17 @@ fn password_has_double(digits: &[u8]) -> bool {
 mod tests {
     #[test]
     fn is_password_valid1() {
-        assert!(super::is_password(112233));
+        assert!(super::is_password(112_233));
     }
 
     #[test]
     fn is_password_valid2() {
-        assert!(super::is_password(111122));
+        assert!(super::is_password(111_122));
     }
 
     #[test]
     fn is_password_invalid1() {
-        assert!(!super::is_password(123444));
+        assert!(!super::is_password(123_444));
     }
 }
 

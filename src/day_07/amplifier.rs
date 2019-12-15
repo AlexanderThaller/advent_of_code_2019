@@ -198,7 +198,7 @@ mod tests {
             28, 1005, 28, 6, 99, 0, 0, 5,
         ];
 
-        let expected = 139629729;
+        let expected = 139_629_729;
         let got = AmplifiersLoop::new(phase_settings, software).run();
 
         assert_eq!(expected, got);
