@@ -8,6 +8,7 @@ pub mod day_03;
 pub mod day_04;
 pub mod day_05;
 pub mod day_07;
+pub mod day_08;
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
@@ -17,7 +18,7 @@ fn main() {
     let args = std::env::args();
     let mut args = args.skip(1);
 
-    let day = args.next().expect("please specify day that should be run");
+    let day = args.next().unwrap_or_default();
 
     match day.as_str() {
         "day_01" => {
@@ -50,6 +51,9 @@ fn main() {
             day_07::part_2::run();
         }
 
-        day => eprintln!("unkown day {}", day),
+        _ => {
+            day_08::part_1::run();
+            day_08::part_2::run();
+        }
     }
 }
