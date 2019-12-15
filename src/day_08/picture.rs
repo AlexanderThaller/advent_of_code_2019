@@ -70,15 +70,12 @@ impl<'a> std::fmt::Display for Render {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f)?;
 
-        for line in &self.pixels {
-            for _ in line {
-                write!(f, "█")?;
-            }
+        for _ in &self.pixels[0] {
             write!(f, "█")?;
-            write!(f, "█")?;
-            writeln!(f)?;
-            break;
         }
+        write!(f, "█")?;
+        write!(f, "█")?;
+        writeln!(f)?;
 
         for line in &self.pixels {
             write!(f, "█")?;
@@ -99,15 +96,12 @@ impl<'a> std::fmt::Display for Render {
             writeln!(f)?;
         }
 
-        for line in &self.pixels {
-            for _ in line {
-                write!(f, "█")?;
-            }
+        for _ in &self.pixels[0] {
             write!(f, "█")?;
-            write!(f, "█")?;
-            writeln!(f)?;
-            break;
         }
+        write!(f, "█")?;
+        write!(f, "█")?;
+        writeln!(f)?;
 
         Ok(())
     }
