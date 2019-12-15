@@ -68,16 +68,45 @@ impl<'a> std::fmt::Display for Picture<'a> {
 
 impl<'a> std::fmt::Display for Render {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f)?;
+
         for line in &self.pixels {
+            for _ in line {
+                write!(f, "█")?;
+            }
+            write!(f, "█")?;
+            write!(f, "█")?;
+            writeln!(f)?;
+            break;
+        }
+
+        for line in &self.pixels {
+            write!(f, "█")?;
+
             for pixel in line {
-                if *pixel == '0' {
-                    write!(f, " ")?;
-                } else {
-                    write!(f, "#")?;
-                }
+                let c = match *pixel {
+                    '1' => " ",
+                    '0' => "█",
+                    '2' => " ",
+                    _ => unreachable!(),
+                };
+
+                write!(f, "{}", c)?;
             }
 
+            write!(f, "█")?;
+
             writeln!(f)?;
+        }
+
+        for line in &self.pixels {
+            for _ in line {
+                write!(f, "█")?;
+            }
+            write!(f, "█")?;
+            write!(f, "█")?;
+            writeln!(f)?;
+            break;
         }
 
         Ok(())
