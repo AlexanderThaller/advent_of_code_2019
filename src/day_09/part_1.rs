@@ -3,7 +3,7 @@ use crate::day_09::computer::{
     Reader,
 };
 
-const BOOST_SOFTWARE: &[isize] = &[
+pub const BOOST_SOFTWARE: &[isize] = &[
     1102, 34_463_338, 34_463_338, 63, 1007, 63, 34_463_338, 63, 1005, 63, 53, 1101, 3, 0, 1000,
     109, 988, 209, 12, 9, 1000, 209, 6, 209, 3, 203, 0, 1008, 1000, 1, 63, 1005, 63, 65, 1008,
     1000, 2, 63, 1005, 63, 904, 1008, 1000, 0, 63, 1005, 63, 58, 4, 25, 104, 0, 99, 4, 0, 104, 0,
@@ -53,7 +53,7 @@ const BOOST_SOFTWARE: &[isize] = &[
     922, 22201, 1, -1, -2, 1105, 1, 968, 22102, 1, -2, -2, 109, -3, 2106, 0, 0,
 ];
 
-const INPUT_VALUES: &[isize] = &[1];
+pub const INPUT_VALUES: &[isize] = &[1];
 
 pub fn run() {
     let mut computer = Computer::default()

@@ -59,7 +59,7 @@ fn main() {
 
         _ => {
             day_09::part_1::run();
-            // day_09::part_2::run();
+            day_09::part_2::run();
         }
     }
 }
