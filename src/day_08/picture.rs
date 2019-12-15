@@ -8,6 +8,11 @@ pub struct Picture<'a> {
     pub pixels: &'a str,
 }
 
+#[derive(Debug)]
+pub struct Render {
+    pub pixels: Vec<Vec<char>>,
+}
+
 impl<'a> Picture<'a> {
     pub fn layers(self) -> Vec<Vec<Vec<char>>> {
         let chars = self.pixels.chars().collect::<Vec<char>>();
@@ -21,6 +26,27 @@ impl<'a> Picture<'a> {
             .chunks(self.height)
             .map(|chunk| chunk.to_vec())
             .collect::<Vec<_>>()
+    }
+
+    pub fn render(self) -> Render {
+        let mut pixels = vec![vec!['2'; self.width]; self.height];
+
+        for layer in self.layers() {
+            for (height, line) in layer.iter().enumerate() {
+                for (width, pixel) in line.iter().enumerate() {
+                    if *pixel == '2' {
+                        continue;
+                    }
+
+                    let current = pixels[height][width];
+                    if current == '2' {
+                        pixels[height][width] = *pixel
+                    }
+                }
+            }
+        }
+
+        Render { pixels }
     }
 }
 
@@ -36,7 +62,25 @@ impl<'a> std::fmt::Display for Picture<'a> {
             writeln!(f)?;
         }
 
-        unimplemented!()
+        Ok(())
+    }
+}
+
+impl<'a> std::fmt::Display for Render {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for line in &self.pixels {
+            for pixel in line {
+                if *pixel == '0' {
+                    write!(f, " ")?;
+                } else {
+                    write!(f, "#")?;
+                }
+            }
+
+            writeln!(f)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -63,6 +107,25 @@ mod tests {
         ];
 
         let got = input.layers();
+
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn renderd_day_08_part_02_example_01() {
+        let width = 2;
+        let height = 2;
+        let pixels = "0222112222120000";
+
+        let input = Picture {
+            width,
+            height,
+            pixels,
+        };
+
+        let expected = vec![vec!['0', '1'], vec!['1', '0']];
+
+        let got = input.render().pixels;
 
         assert_eq!(expected, got);
     }
