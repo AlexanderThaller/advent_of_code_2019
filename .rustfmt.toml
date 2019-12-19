@@ -2,6 +2,7 @@ condense_wildcard_suffixes  =  true
 format_strings              =  true
 imports_indent              =  "Block"
 imports_layout              =  "Vertical"
+indent_style                =  "Block"
 merge_imports               =  true
 normalize_comments          =  true
 reorder_imports             =  true

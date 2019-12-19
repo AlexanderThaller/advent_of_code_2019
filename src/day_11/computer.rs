@@ -8,34 +8,38 @@ use std::{
 };
 
 pub struct Computer {
-    pub memory: Vec<isize>,
-    pub input: Reader,
-    pub output: Writer,
     pub debug_flags: DebugFlags,
+    pub input: Reader,
+    pub memory: BTreeMap<usize, isize>,
+    pub output: Writer,
     pub relative_base: isize,
-    pub heap: BTreeMap<usize, isize>,
 }
 
 impl Default for Computer {
     fn default() -> Self {
         Self {
-            memory: Vec::new(),
+            debug_flags: DebugFlags::default(),
+            memory: BTreeMap::default(),
             input: Reader::Tester(Box::new(Vec::new().into_iter())),
             output: Writer::Tester { values: Vec::new() },
-            debug_flags: DebugFlags::default(),
             relative_base: 0,
-            heap: BTreeMap::default(),
         }
     }
 }
 
 impl Computer {
-    pub fn with_memory(self, memory: Vec<isize>) -> Self {
+    pub fn with_software(self, software: Vec<isize>) -> Self {
+        let memory = software.into_iter().enumerate().collect();
+
         Self { memory, ..self }
     }
 
     pub fn with_input(self, input: Reader) -> Self {
         Self { input, ..self }
+    }
+
+    pub fn with_output(self, output: Writer) -> Self {
+        Self { output, ..self }
     }
 
     pub fn with_relative_base(self, relative_base: isize) -> Self {
@@ -140,19 +144,18 @@ impl DebugFlags {
 }
 
 impl From<Vec<isize>> for Computer {
-    fn from(memory: Vec<isize>) -> Self {
+    fn from(software: Vec<isize>) -> Self {
         Self {
-            memory,
             input: Reader::Disabled,
             output: Writer::Disabled,
             ..Self::default()
         }
+        .with_software(software)
     }
 }
 
 #[derive(Debug)]
 pub enum ComputerError {
-    IndexNotFound(usize),
     ReadFromInput(std::io::Error),
     NegativeAddress(isize),
 }
@@ -211,7 +214,8 @@ impl Computer {
 
         loop {
             if self.debug_flags.print_memory {
-                println!("memory: {:?}", self.memory);
+                println!("memory:");
+                println!("{:#?}", self.memory);
             }
 
             let memory_value = self.read_value(index, &ParameterMode::Immediate)?;
@@ -445,14 +449,14 @@ impl Computer {
             }
         }
 
-        Ok(self.memory.clone())
+        Ok(self.memory.values().copied().collect())
     }
 
     fn get_address(&mut self, index: usize, mode: &ParameterMode) -> isize {
         match mode {
-            ParameterMode::Position => self.memory[index],
+            ParameterMode::Position => *self.memory.get(&index).unwrap_or(&0),
             ParameterMode::Immediate => index as isize,
-            ParameterMode::Relative => self.memory[index] + self.relative_base,
+            ParameterMode::Relative => *self.memory.get(&index).unwrap_or(&0) + self.relative_base,
         }
     }
 
@@ -465,23 +469,11 @@ impl Computer {
 
         let address = address as usize;
 
-        let value = if self.memory.len() < address + 1 {
-            self.heap.get(&(address + 1)).unwrap_or(&0)
-        } else {
-            self.memory
-                .get(address)
-                .ok_or(ComputerError::IndexNotFound(address))?
-        };
-
-        Ok(*value)
+        Ok(*self.memory.get(&(address)).unwrap_or(&0))
     }
 
     fn write_value(&mut self, address: usize, value: isize) -> Result<(), ComputerError> {
-        if self.memory.len() < address + 1 {
-            self.heap.insert(address + 1, value);
-        } else {
-            self.memory[address] = value;
-        };
+        self.memory.insert(address, value);
 
         Ok(())
     }
@@ -688,23 +680,23 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example01() {
-        let input_memory = vec![3, 0, 4, 0, 99];
+        let input_software = vec![3, 0, 4, 0, 99];
         let input_values = vec![42];
 
-        let expected_memory = vec![42, 0, 4, 0, 99];
+        let expected_software = vec![42, 0, 4, 0, 99];
         let expected_output = Writer::Tester { values: vec![42] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
-        let got_memory = computer.run().unwrap();
+        let got_software = computer.run().unwrap();
         let got_output = computer.output;
 
-        assert_eq!(expected_memory, got_memory);
+        assert_eq!(expected_software, got_software);
         assert_eq!(expected_output.values(), got_output.values());
     }
 
@@ -757,41 +749,41 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example02() {
-        let input_memory = vec![1002, 4, 3, 4, 33];
-        let expected_memory = vec![1002, 4, 3, 4, 99];
+        let input_software = vec![1002, 4, 3, 4, 33];
+        let expected_software = vec![1002, 4, 3, 4, 99];
 
-        let mut computer = Computer::from(input_memory);
+        let mut computer = Computer::from(input_software);
 
-        let got_memory = computer.run().unwrap();
+        let got_software = computer.run().unwrap();
 
-        assert_eq!(expected_memory, got_memory);
+        assert_eq!(expected_software, got_software);
     }
 
     #[test]
     fn computer_run_day_05_example03() {
-        let input_memory = vec![1101, 100, -1, 4, 0];
-        let expected_memory = vec![1101, 100, -1, 4, 99];
+        let input_software = vec![1101, 100, -1, 4, 0];
+        let expected_software = vec![1101, 100, -1, 4, 99];
 
-        let mut computer = Computer::from(input_memory);
+        let mut computer = Computer::from(input_software);
 
-        let got_memory = computer.run().unwrap();
+        let got_software = computer.run().unwrap();
 
-        assert_eq!(expected_memory, got_memory);
+        assert_eq!(expected_software, got_software);
     }
 
     #[test]
     fn computer_run_day_05_example04_equal() {
-        let input_memory = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_software = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
         let input_values = vec![8];
 
         let expected_output = Writer::Tester { values: vec![1] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -801,17 +793,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example04_not_equal() {
-        let input_memory = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_software = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
         let input_values = vec![7];
 
         let expected_output = Writer::Tester { values: vec![0] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -821,17 +813,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example05_less() {
-        let input_memory = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_software = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
         let input_values = vec![7];
 
         let expected_output = Writer::Tester { values: vec![1] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -841,17 +833,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example05_equal() {
-        let input_memory = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_software = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
         let input_values = vec![8];
 
         let expected_output = Writer::Tester { values: vec![0] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -861,17 +853,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example06_equal() {
-        let input_memory = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+        let input_software = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
         let input_values = vec![8];
 
         let expected_output = Writer::Tester { values: vec![1] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -881,17 +873,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example06_not_equal() {
-        let input_memory = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+        let input_software = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
         let input_values = vec![42];
 
         let expected_output = Writer::Tester { values: vec![0] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -901,17 +893,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example07_less() {
-        let input_memory = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+        let input_software = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
         let input_values = vec![-42];
 
         let expected_output = Writer::Tester { values: vec![1] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -921,17 +913,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example07_equal() {
-        let input_memory = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+        let input_software = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
         let input_values = vec![8];
 
         let expected_output = Writer::Tester { values: vec![0] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -941,17 +933,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example08_zero() {
-        let input_memory = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+        let input_software = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
         let input_values = vec![0];
 
         let expected_output = Writer::Tester { values: vec![0] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -961,17 +953,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example08_not_zero() {
-        let input_memory = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+        let input_software = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
         let input_values = vec![42];
 
         let expected_output = Writer::Tester { values: vec![1] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -981,17 +973,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example09_zero() {
-        let input_memory = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        let input_software = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
         let input_values = vec![0];
 
         let expected_output = Writer::Tester { values: vec![0] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -1001,17 +993,17 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example09_not_zero() {
-        let input_memory = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        let input_software = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
         let input_values = vec![42];
 
         let expected_output = Writer::Tester { values: vec![1] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -1021,7 +1013,7 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example10_below_eight() {
-        let input_memory = vec![
+        let input_software = vec![
             3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
             0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
             20, 1105, 1, 46, 98, 99,
@@ -1031,11 +1023,11 @@ mod tests {
         let expected_output = Writer::Tester { values: vec![999] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -1045,7 +1037,7 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example10_equal_eight() {
-        let input_memory = vec![
+        let input_software = vec![
             3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
             0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
             20, 1105, 1, 46, 98, 99,
@@ -1055,11 +1047,11 @@ mod tests {
         let expected_output = Writer::Tester { values: vec![1000] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -1069,7 +1061,7 @@ mod tests {
 
     #[test]
     fn computer_run_day_05_example10_above_eight() {
-        let input_memory = vec![
+        let input_software = vec![
             3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
             0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
             20, 1105, 1, 46, 98, 99,
@@ -1079,11 +1071,11 @@ mod tests {
         let expected_output = Writer::Tester { values: vec![1001] };
 
         let mut computer = Computer {
-            memory: input_memory,
             input: Reader::Tester(Box::new(input_values.into_iter())),
             output: Writer::Tester { values: Vec::new() },
             ..Computer::default()
-        };
+        }
+        .with_software(input_software);
 
         computer.run().unwrap();
         let got_output = computer.output;
@@ -1093,11 +1085,11 @@ mod tests {
 
     #[test]
     fn computer_run_day_09_example01() {
-        let input_memory = vec![109, 19, 204, -34, 99];
+        let input_software = vec![109, 19, 204, -34, 99];
         let expected = vec![42];
 
         let mut computer = Computer::default()
-            .with_memory(input_memory)
+            .with_software(input_software)
             .with_relative_base(2000)
             .print_relative_base()
             .print_output()
@@ -1113,14 +1105,14 @@ mod tests {
 
     #[test]
     fn computer_run_day_09_example02() {
-        let input_memory = vec![
+        let input_software = vec![
             109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99,
         ];
 
-        let expected_output = input_memory.clone();
+        let expected_output = input_software.clone();
 
         let mut computer = Computer::default()
-            .with_memory(input_memory)
+            .with_software(input_software)
             .print_relative_base()
             .print_output()
             .print_instructions();
@@ -1133,11 +1125,11 @@ mod tests {
 
     #[test]
     fn computer_run_day_09_example03() {
-        let input_memory = vec![1102, 34_915_192, 34_915_192, 7, 4, 7, 99, 0];
+        let input_software = vec![1102, 34_915_192, 34_915_192, 7, 4, 7, 99, 0];
         let expected_output = vec![1_219_070_632_396_864];
 
         let mut computer = Computer::default()
-            .with_memory(input_memory)
+            .with_software(input_software)
             .print_relative_base()
             .print_output()
             .print_instructions();
@@ -1150,11 +1142,11 @@ mod tests {
 
     #[test]
     fn computer_run_day_09_example04() {
-        let input_memory = vec![104, 1_125_899_906_842_624, 99];
+        let input_software = vec![104, 1_125_899_906_842_624, 99];
         let expected_output = vec![1_125_899_906_842_624];
 
         let mut computer = Computer::default()
-            .with_memory(input_memory)
+            .with_software(input_software)
             .print_relative_base()
             .print_output()
             .print_instructions();

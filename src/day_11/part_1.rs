@@ -1,3 +1,6 @@
+use super::roboter::Roboter;
+
 pub fn run() {
-    todo!()
+    let mut robot = Roboter::default();
+    robot.run()
 }
