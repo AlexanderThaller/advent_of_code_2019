@@ -1,5 +1,4 @@
 #![feature(test)]
-#![feature(euclidean_division)]
 //#![deny(missing_docs)]
 //! Solutions for Advent of Code 2019
 
@@ -12,6 +11,7 @@ pub mod day_07;
 pub mod day_08;
 pub mod day_09;
 pub mod day_10;
+pub mod day_11;
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
@@ -64,9 +64,14 @@ fn main() {
             day_09::part_2::run();
         }
 
-        _ => {
+        "day_10" => {
             day_10::part_1::run();
             day_10::part_2::run();
+        }
+
+        _ => {
+            day_11::part_1::run();
+            day_11::part_2::run();
         }
     }
 }

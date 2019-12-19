@@ -2,7 +2,6 @@ pub mod angles;
 pub mod canvas;
 pub mod ray;
 
-use angles::Angles;
 use ray::Ray;
 use std::{
     collections::BTreeMap,

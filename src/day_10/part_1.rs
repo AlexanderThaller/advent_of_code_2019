@@ -1,14 +1,4 @@
-use crate::day_10::asteroids::{
-    angles::Angles,
-    canvas,
-    ray::{
-        Ray,
-        RAY_MIN_STEP,
-    },
-    Field,
-    Object,
-    Position,
-};
+use crate::day_10::asteroids::Field;
 
 pub fn run() {
     const EXAMPLE_01: &str = "#....
