@@ -669,9 +669,28 @@ pub struct Roboter {
     canvas: BTreeMap<(isize, isize), Color>,
     facing: Direction,
     position: (isize, isize),
+    default_color: Color,
+}
+
+impl Default for Roboter {
+    fn default() -> Self {
+        Self {
+            canvas: BTreeMap::default(),
+            facing: Direction::Up,
+            position: (0, 0),
+            default_color: Color::Black,
+        }
+    }
 }
 
 impl Roboter {
+    pub fn with_default_color(self, default_color: Color) -> Self {
+        Self {
+            default_color,
+            ..self
+        }
+    }
+
     pub fn run(&mut self) {
         let (sender_output, receiver_output) = unbounded();
         let (sender_input, receiver_input) = unbounded();
@@ -689,7 +708,10 @@ impl Roboter {
         });
 
         loop {
-            let send_value = self.canvas.get(&self.position).unwrap_or(&Color::Black);
+            let send_value = self
+                .canvas
+                .get(&self.position)
+                .unwrap_or(&self.default_color);
             sender_input.send(send_value.into()).unwrap();
 
             if let Ok(color_value) = receiver_output.recv() {
@@ -758,16 +780,6 @@ impl Roboter {
         canvas.add_roboter(&self.position, &self.facing);
 
         canvas.run();
-    }
-}
-
-impl Default for Roboter {
-    fn default() -> Self {
-        Self {
-            canvas: BTreeMap::default(),
-            facing: Direction::Up,
-            position: (0, 0),
-        }
     }
 }
 

@@ -1,3 +1,9 @@
+use super::roboter::{
+    Color,
+    Roboter,
+};
+
 pub fn run() {
-    todo!()
+    let mut robot = Roboter::default().with_default_color(Color::White);
+    robot.run()
 }
