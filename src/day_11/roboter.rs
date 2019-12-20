@@ -666,7 +666,7 @@ const ROBOT_SOFTWARE: &[isize] = &[
 
 #[derive(Debug)]
 pub struct Roboter {
-    canvas: BTreeMap<(isize, isize), Color>,
+    pub canvas: BTreeMap<(isize, isize), Color>,
     facing: Direction,
     position: (isize, isize),
     default_color: Color,
@@ -728,9 +728,6 @@ impl Roboter {
 
             self.step();
         }
-
-        self.draw();
-        dbg!(&self.canvas.len());
     }
 
     fn turn(&mut self, direction: Direction) {
@@ -770,7 +767,7 @@ impl Roboter {
         self.canvas.insert(self.position, color);
     }
 
-    fn draw(&self) {
+    pub fn draw(&self) {
         let mut canvas = super::canvas::Canvas::default();
 
         for (position, color) in &self.canvas {

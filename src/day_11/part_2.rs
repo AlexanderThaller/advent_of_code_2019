@@ -5,5 +5,6 @@ use super::roboter::{
 
 pub fn run() {
     let mut robot = Roboter::default().with_default_color(Color::White);
-    robot.run()
+    robot.run();
+    robot.draw();
 }
