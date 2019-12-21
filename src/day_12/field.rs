@@ -3,7 +3,7 @@ use super::object::{
     ParseObjectError,
 };
 
-#[derive(Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Default, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub struct Field {
     objects: Vec<Object>,
 }
@@ -33,8 +33,7 @@ impl From<ParseObjectError> for ParseFieldError {
 }
 
 impl Field {
-    #[allow(dead_code)]
-    pub fn step(self) -> Self {
+    pub fn step(&self) -> Self {
         let mut objects: Vec<Object> = Vec::new();
 
         for object_check in &self.objects {
@@ -53,7 +52,6 @@ impl Field {
         Self { objects }
     }
 
-    #[allow(dead_code)]
     pub fn step_n(mut self, count: usize) -> Self {
         for _ in 0..count {
             self = self.step();
@@ -67,6 +65,27 @@ impl Field {
             .into_iter()
             .map(|object| object.calculate_energy())
             .sum()
+    }
+
+    pub fn objects_x(&self) -> Vec<(isize, isize)> {
+        self.objects
+            .iter()
+            .map(|object| (object.position.x, object.velocity.x))
+            .collect()
+    }
+
+    pub fn objects_y(&self) -> Vec<(isize, isize)> {
+        self.objects
+            .iter()
+            .map(|object| (object.position.y, object.velocity.y))
+            .collect()
+    }
+
+    pub fn objects_z(&self) -> Vec<(isize, isize)> {
+        self.objects
+            .iter()
+            .map(|object| (object.position.z, object.velocity.z))
+            .collect()
     }
 
     #[allow(dead_code)]
@@ -87,6 +106,7 @@ mod tests {
         Field,
     };
     use pretty_assertions::assert_eq;
+    use test::Bencher;
 
     const INPUT_DAY_12_EXAMPLE_01: &str = "<x=-1, y=0, z=2>
 <x=2, y=-10, z=-7>
@@ -195,5 +215,13 @@ pos=<x= 16, y=-13, z= 23>, vel=<x=  7, y=  1, z=  1>";
         let got = input.step_n(100).calculate_energy();
 
         assert_eq!(expected, got);
+    }
+
+    #[bench]
+    fn field_calculate_energy_day_12_example_01_step_1(b: &mut Bencher) {
+        b.iter(|| {
+            let input: Field = INPUT_DAY_12_EXAMPLE_01.parse().unwrap();
+            input.step()
+        });
     }
 }

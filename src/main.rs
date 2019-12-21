@@ -2,6 +2,8 @@
 //#![deny(missing_docs)]
 //! Solutions for Advent of Code 2019
 
+extern crate test;
+
 pub mod day_01;
 pub mod day_02;
 pub mod day_03;

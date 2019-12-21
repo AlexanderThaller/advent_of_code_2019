@@ -7,8 +7,8 @@ use super::{
 
 #[derive(Debug, Default, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 pub struct Object {
-    position: Position,
-    velocity: Velocity,
+    pub position: Position,
+    pub velocity: Velocity,
 }
 
 impl std::fmt::Display for Object {

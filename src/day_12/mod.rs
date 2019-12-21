@@ -6,8 +6,6 @@ pub mod position;
 pub mod velocity;
 
 pub fn parse_values(s: &str) -> Result<(isize, isize, isize), ParseValueError> {
-    dbg!(s);
-
     let mut x = 0;
     let mut y = 0;
     let mut z = 0;
