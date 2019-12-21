@@ -5,7 +5,7 @@ use super::arcade::{
 
 pub fn run() {
     let mut arcade = Arcade::default();
-    let _ = arcade.run();
+    let score = arcade.run();
 
     let blocks = arcade
         .tiles
@@ -13,5 +13,5 @@ pub fn run() {
         .filter(|tile| **tile == Tile::Block)
         .count();
 
-    dbg!(blocks);
+    dbg!((blocks, score));
 }

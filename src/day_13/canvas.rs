@@ -1,3 +1,7 @@
+use super::arcade::{
+    Position,
+    Tile,
+};
 use ggez::{
     self,
     event::{
@@ -17,11 +21,11 @@ use ggez::{
     GameResult,
 };
 
-const FIELD_SIZE_X: f32 = 500.0;
+const FIELD_SIZE_X: f32 = 800.0;
 const FIELD_SIZE_Y: f32 = 500.0;
 const SCALE_FACTOR: f32 = 20.0;
-const DRAW_START_POINT_X: f32 = FIELD_SIZE_X / 2.0;
-const DRAW_START_POINT_Y: f32 = FIELD_SIZE_Y - 100.0;
+const DRAW_START_POINT_X: f32 = 0.0;
+const DRAW_START_POINT_Y: f32 = 0.0;
 const VIEW_STEP_FACTOR: f32 = 10.0;
 const CIRCLE_SIZE: f32 = 5.0;
 
@@ -102,8 +106,8 @@ impl Default for Canvas {
             pixels: Vec::new(),
             cached_pixels: Vec::new(),
             zoom: 1.0,
-            view_x: 0.0,
-            view_y: 0.0,
+            view_x: -10.0,
+            view_y: -10.0,
         }
     }
 }
@@ -157,44 +161,29 @@ impl Canvas {
         self.pixels.push(mesh);
     }
 
-    // pub fn add_color(&mut self, position: &(isize, isize), color: RobotColor) {
-    // let mut mesh = MeshBuilder::new();
-    // let draw_color = match color {
-    // RobotColor::Black => BLACK,
-    // RobotColor::White => WHITE,
-    // };
-    //
-    // mesh.circle(
-    // DrawMode::fill(),
-    // na::Point2::new(
-    // position.0 as f32 * SCALE_FACTOR,
-    // position.1 as f32 * SCALE_FACTOR,
-    // ),
-    // CIRCLE_SIZE,
-    // CIRCLE_SIZE,
-    // draw_color,
-    // );
-    //
-    // self.pixels.push(mesh);
-    // }
-    //
-    // pub fn add_roboter(&mut self, position: &(isize, isize), _facing: &Direction)
-    // { let mut mesh = MeshBuilder::new();
-    // let draw_color = BLUE;
-    //
-    // mesh.circle(
-    // DrawMode::fill(),
-    // na::Point2::new(
-    // position.0 as f32 * SCALE_FACTOR,
-    // position.1 as f32 * SCALE_FACTOR,
-    // ),
-    // CIRCLE_SIZE - 2.0,
-    // CIRCLE_SIZE - 2.0,
-    // draw_color,
-    // );
-    //
-    // self.pixels.push(mesh);
-    // }
+    pub fn add_tile(&mut self, position: &Position, tile: Tile) {
+        let mut mesh = MeshBuilder::new();
+        let draw_color = match tile {
+            Tile::Empty => COLOR_BACKGROUND,
+            Tile::Wall => BLACK,
+            Tile::Block => BLUE,
+            Tile::HorizontalPaddle => GREEN,
+            Tile::Ball => RED,
+        };
+
+        mesh.circle(
+            DrawMode::fill(),
+            na::Point2::new(
+                position.x as f32 * SCALE_FACTOR,
+                position.y as f32 * SCALE_FACTOR,
+            ),
+            CIRCLE_SIZE - 2.0,
+            CIRCLE_SIZE - 2.0,
+            draw_color,
+        );
+
+        self.pixels.push(mesh);
+    }
 }
 
 impl event::EventHandler for Canvas {
