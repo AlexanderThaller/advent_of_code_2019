@@ -15,6 +15,7 @@ pub mod day_09;
 // pub mod day_10;
 pub mod day_11;
 pub mod day_12;
+pub mod day_13;
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
@@ -76,9 +77,14 @@ fn main() {
             day_11::part_2::run();
         }
 
-        _ => {
+        "day_12" => {
             day_12::part_1::run();
             day_12::part_2::run();
+        }
+
+        _ => {
+            day_13::part_1::run();
+            day_13::part_2::run();
         }
     }
 }
